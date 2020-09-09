@@ -8,7 +8,7 @@ import { MapService } from "../services/map.service";
 })
 export class LocatorComponent implements OnInit {
   constructor(private mapService: MapService) {}
-  point = { latitude: null, longitude: null };
+  point = { latitude: -109.0889, longitude: 37.0243 };
   basemapType = "hybrid";
   mapZoomLevel = 5;
 
