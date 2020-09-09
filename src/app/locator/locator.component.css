@@ -1,0 +1,22 @@
+.container {
+  display: flex;
+  height: 100%;
+}
+
+.map-container {
+  width: 90%;
+}
+
+.locator-container {
+  padding: 10px;
+}
+
+.example-form {
+  min-width: 150px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.example-full-width {
+  width: 100%;
+}

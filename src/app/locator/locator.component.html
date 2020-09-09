@@ -1,0 +1,43 @@
+<div class="container">
+  <div class="map-container">
+    <app-esri-map> </app-esri-map>
+  </div>
+
+  <div class="locator-container">
+    <h1>Go to position</h1>
+
+    <form class="example-form">
+      <mat-form-field class="example-full-width">
+        <mat-label>Longtitude</mat-label>
+        <input
+          matInput
+          placeholder="Longtitude"
+          name="longitude"
+          [(ngModel)]="point.longitude"
+          type="number"
+        />
+      </mat-form-field>
+      <mat-form-field class="example-full-width">
+        <mat-label>Latitude</mat-label>
+        <input
+          matInput
+          placeholder="Latitude"
+          name="latitude"
+          [(ngModel)]="point.latitude"
+          type="number"
+        />
+      </mat-form-field>
+
+      <button
+        (click)="onClick()"
+        [ngStyle]="{ width: '100%' }"
+        mat-raised-button
+        color="primary"
+      >
+        Locate
+      </button>
+    </form>
+    <br />
+    {{ point | json }}
+  </div>
+</div>
