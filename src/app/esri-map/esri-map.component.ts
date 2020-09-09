@@ -19,23 +19,67 @@ export class EsriMapComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject();
   // The <div> where we will place the map
   @ViewChild("mapViewNode", { static: true }) private mapViewEl: ElementRef;
-  private view: any;
+  private _View: any;
   private _Graphic: any;
 
   constructor(private mapService: MapService) {}
 
+  newPointMarker(position) {
+    return {
+      geometry: {
+        type: "point",
+        longitude: position[0],
+        latitude: position[1],
+      },
+      symbol: {
+        type: "simple-marker",
+        style: "square",
+        color: [255, 0, 0, 0.5],
+        size: 10,
+        opacity: 0,
+        outline: {
+          color: [0, 0, 0, 0.6],
+          width: 2,
+        },
+      },
+    };
+  }
+
+  openPopup(view, geometryEngine) {
+    view.on("click", (e) => {
+      // var geom = view.popup.selectedFeature.geometry;
+      // var distance = geometryEngine.convexHull(geom, "miles");
+      // console.log(distance);
+      
+      view.goTo([e.mapPoint.longitude, e.mapPoint.latitude]);
+      this.mapService.setLocatePoint([
+        e.mapPoint.longitude,
+        e.mapPoint.latitude,
+      ]);
+      view.popup.open();
+    });
+  }
+
   async initializeMap() {
     try {
       // Load the modules for the ArcGIS API for JavaScript
-      const [Map, MapView, Graphic] = await loadModules([
+      const [
+        Map,
+        MapView,
+        Graphic,
+        MapImageLayer,
+        GeometryEngine,
+      ] = await loadModules([
         "esri/Map",
         "esri/views/MapView",
         "esri/Graphic",
+        "esri/layers/MapImageLayer",
+        "esri/geometry/geometryEngine",
       ]);
 
       // Configure the Map
       const mapProperties = {
-        basemap: "streets-vector",
+        basemap: "hybrid",
       };
 
       const map = new Map(mapProperties);
@@ -43,16 +87,36 @@ export class EsriMapComponent implements OnInit, OnDestroy {
       // Initialize the MapView
       const mapViewProperties = {
         container: this.mapViewEl.nativeElement,
-        center: [0.1278, 51.5074],
-        zoom: 10,
-        map: map,
+        center: [-109, 37],
+        zoom: 4,
+        map,
       };
 
       this._Graphic = Graphic;
 
-      this.view = new MapView(mapViewProperties);
-      await this.view.when(); // wait for map to load
-      return this.view;
+      // Create map image layer
+      const mapImageLayer = new MapImageLayer({
+        url: "/api/arcgis/rest/services/Census/MapServer",
+        outFields: ["*"],
+        sublayers: [
+          {
+            id: 3,
+            visible: true,
+            popupTemplate: {
+              title: "{STATE_NAME}",
+              content: "Population 2007: {POP2007}<br />Area: {Shape_Area}",
+            },
+          },
+        ],
+      });
+
+      // Add graphic layer to map
+      map.add(mapImageLayer);
+
+      this._View = new MapView(mapViewProperties);
+      await this._View.when(); // wait for map to load
+      this.openPopup(this._View, GeometryEngine);
+      return this._View;
     } catch (error) {
       console.error("EsriLoader: ", error);
     }
@@ -71,29 +135,13 @@ export class EsriMapComponent implements OnInit, OnDestroy {
     this.mapService.location
       .pipe(takeUntil(this.destroy$))
       .subscribe((position) => {
-        if (this.view) {
-          this.view.goTo({
+        if (this._View) {
+          this._View.goTo({
             target: position,
+            zoom: 7,
           });
-          let pointGraphic = {
-            geometry: {
-              type: "point",
-              longitude: position[0],
-              latitude: position[1],
-            },
-            symbol: {
-              type: "simple-marker",
-              style: "square",
-              color: [255, 0, 0, 0.5],
-              size: 10,
-              opacity: 0,
-              outline: {
-                color: [0, 0, 0, 0.6],
-                width: 2,
-              },
-            },
-          };
-          this.addGraphicToMap(this.view, pointGraphic);
+
+          this.addGraphicToMap(this._View, this.newPointMarker(position));
         } else {
           console.log("Map not loaded");
         }
@@ -101,9 +149,9 @@ export class EsriMapComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.view) {
+    if (this._View) {
       // destroy the map view
-      this.view.container = null;
+      this._View.container = null;
     }
   }
 }

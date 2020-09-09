@@ -1,0 +1,10 @@
+{
+  "/api": {
+    "target": "https://sampleserver6.arcgisonline.com",
+    "secure": true,
+    "pathRewrite": {
+      "^/api": ""
+    },
+    "changeOrigin": true
+  }
+}
