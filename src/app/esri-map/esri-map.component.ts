@@ -45,13 +45,12 @@ export class EsriMapComponent implements OnInit, OnDestroy {
     };
   }
 
-  openPopup(view, geometryEngine) {
+  openPopup(view) {
     view.on("click", (e) => {
-      // var geom = view.popup.selectedFeature.geometry;
-      // var distance = geometryEngine.convexHull(geom, "miles");
-      // console.log(distance);
-      
-      view.goTo([e.mapPoint.longitude, e.mapPoint.latitude]);
+      view.goTo({
+        target: [e.mapPoint.longitude, e.mapPoint.latitude],
+        zoom: 6,
+      });
       this.mapService.setLocatePoint([
         e.mapPoint.longitude,
         e.mapPoint.latitude,
@@ -63,18 +62,11 @@ export class EsriMapComponent implements OnInit, OnDestroy {
   async initializeMap() {
     try {
       // Load the modules for the ArcGIS API for JavaScript
-      const [
-        Map,
-        MapView,
-        Graphic,
-        MapImageLayer,
-        GeometryEngine,
-      ] = await loadModules([
+      const [Map, MapView, Graphic, MapImageLayer] = await loadModules([
         "esri/Map",
         "esri/views/MapView",
         "esri/Graphic",
         "esri/layers/MapImageLayer",
-        "esri/geometry/geometryEngine",
       ]);
 
       // Configure the Map
@@ -115,7 +107,7 @@ export class EsriMapComponent implements OnInit, OnDestroy {
 
       this._View = new MapView(mapViewProperties);
       await this._View.when(); // wait for map to load
-      this.openPopup(this._View, GeometryEngine);
+      this.openPopup(this._View);
       return this._View;
     } catch (error) {
       console.error("EsriLoader: ", error);
