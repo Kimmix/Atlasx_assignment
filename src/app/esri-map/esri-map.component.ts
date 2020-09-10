@@ -45,7 +45,7 @@ export class EsriMapComponent implements OnInit, OnDestroy {
     };
   }
 
-  openPopup(view) {
+  onClick(view) {
     view.on("click", (e) => {
       view.goTo({
         target: [e.mapPoint.longitude, e.mapPoint.latitude],
@@ -55,23 +55,31 @@ export class EsriMapComponent implements OnInit, OnDestroy {
         e.mapPoint.longitude,
         e.mapPoint.latitude,
       ]);
-      view.popup.open();
     });
   }
 
   async initializeMap() {
     try {
       // Load the modules for the ArcGIS API for JavaScript
-      const [Map, MapView, Graphic, MapImageLayer] = await loadModules([
+      const [
+        Map,
+        MapView,
+        Graphic,
+        MapImageLayer,
+        QueryTask,
+        Query,
+      ] = await loadModules([
         "esri/Map",
         "esri/views/MapView",
         "esri/Graphic",
         "esri/layers/MapImageLayer",
+        "esri/tasks/QueryTask",
+        "esri/tasks/support/Query",
       ]);
 
       // Configure the Map
       const mapProperties = {
-        basemap: "hybrid",
+        basemap: "topo-vector",
       };
 
       const map = new Map(mapProperties);
@@ -84,30 +92,23 @@ export class EsriMapComponent implements OnInit, OnDestroy {
         map,
       };
 
-      this._Graphic = Graphic;
+      var queryTask = new QueryTask({
+        url: "/api/ArcGIS/rest/services/Demographics/ESRI_Census_USA/MapServer/5",
+      });
+      var query = new Query();
+      query.returnGeometry = true;
+      query.outFields = ["*"];
+      query.where = "1=1"; 
 
-      // Create map image layer
-      const mapImageLayer = new MapImageLayer({
-        url: "/api/arcgis/rest/services/Census/MapServer",
-        outFields: ["*"],
-        sublayers: [
-          {
-            id: 3,
-            visible: true,
-            popupTemplate: {
-              title: "{STATE_NAME}",
-              content: "Population 2007: {POP2007}<br />Area: {Shape_Area}",
-            },
-          },
-        ],
+      // When resolved, returns features and graphics that satisfy the query.
+      queryTask.execute(query).then(function (results) {
+        console.log(results.features);
       });
 
-      // Add graphic layer to map
-      map.add(mapImageLayer);
-
+      this._Graphic = Graphic;
       this._View = new MapView(mapViewProperties);
       await this._View.when(); // wait for map to load
-      this.openPopup(this._View);
+      this.onClick(this._View);
       return this._View;
     } catch (error) {
       console.error("EsriLoader: ", error);
