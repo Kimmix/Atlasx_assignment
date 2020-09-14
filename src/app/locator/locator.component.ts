@@ -14,25 +14,19 @@ export class LocatorComponent implements OnInit {
   point = { longitude: -109.0889, latitude: 37.0243 };
   basemapType = "hybrid";
   mapZoomLevel = 5;
+  states;
 
   ngOnInit() {
-    console.log("CustomPoint", this.point);
-    this.mapService.locatePoint
+    this.mapService.query
       .pipe(takeUntil(this.destroy$))
-      .subscribe((pos) => {
-        console.log(pos);
-        this.point.longitude = pos[0];
-        this.point.latitude = pos[1];
+      .subscribe((res: any) => {
+        if (res) {
+          this.states = res.features;
+        }
       });
   }
 
-  onClick() {
-    this.mapService.setLocation([this.point.longitude, this.point.latitude]);
-    // this.mapCenter = [this.point.latitude, this.point.longitude];
-  }
-
-  // See app.component.html
-  mapLoadedEvent(status: boolean) {
-    console.log("The map loaded: " + status);
+  onClick(item) {
+    this.mapService.setRings(item.value.geometry);
   }
 }

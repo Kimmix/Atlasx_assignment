@@ -22,25 +22,19 @@ export class EsriMapComponent implements OnInit, OnDestroy {
   private _View: any;
   private _Graphic: any;
 
-  constructor(private mapService: MapService) {}
+  constructor(private _mapService: MapService) {}
 
-  newPointMarker(position) {
+  newMarker(rings) {
+    console.log(rings);
+
     return {
       geometry: {
-        type: "point",
-        longitude: position[0],
-        latitude: position[1],
+        type: "polygon",
+        rings: rings.rings,
       },
       symbol: {
-        type: "simple-marker",
-        style: "square",
-        color: [255, 0, 0, 0.5],
-        size: 10,
-        opacity: 0,
-        outline: {
-          color: [0, 0, 0, 0.6],
-          width: 2,
-        },
+        type: "simple-fill", // autocasts as new SimpleFillSymbol()
+        color: [150, 139, 79, 0.5],
       },
     };
   }
@@ -51,7 +45,7 @@ export class EsriMapComponent implements OnInit, OnDestroy {
         target: [e.mapPoint.longitude, e.mapPoint.latitude],
         zoom: 6,
       });
-      this.mapService.setLocatePoint([
+      this._mapService.setLocatePoint([
         e.mapPoint.longitude,
         e.mapPoint.latitude,
       ]);
@@ -93,16 +87,17 @@ export class EsriMapComponent implements OnInit, OnDestroy {
       };
 
       var queryTask = new QueryTask({
-        url: "/api/ArcGIS/rest/services/Demographics/ESRI_Census_USA/MapServer/5",
+        url:
+          "/api/ArcGIS/rest/services/Demographics/ESRI_Census_USA/MapServer/5",
       });
       var query = new Query();
       query.returnGeometry = true;
-      query.outFields = ["*"];
-      query.where = "1=1"; 
+      query.outFields = ["SUB_REGION", "STATE_NAME", "STATE_ABBR"];
+      query.where = "1=1";
 
       // When resolved, returns features and graphics that satisfy the query.
-      queryTask.execute(query).then(function (results) {
-        console.log(results.features);
+      queryTask.execute(query).then((results) => {
+        this._mapService.setQuery(results.toJSON());
       });
 
       this._Graphic = Graphic;
@@ -115,30 +110,29 @@ export class EsriMapComponent implements OnInit, OnDestroy {
     }
   }
 
-  addGraphicToMap(view, graphicJson) {
+  addGraphicToMap(view, graphic) {
+    view.graphics.removeAll();
+
     // make sure that the graphic class has already been loaded
     if (!this._Graphic) {
       throw new Error("You must load a map before creating new graphics");
     }
-    view.graphics.add(new this._Graphic(graphicJson));
+    const polygon = new this._Graphic(graphic);
+    view.graphics.add(polygon);
+    view.goTo({
+      target: polygon,
+    });
   }
 
   ngOnInit() {
     this.initializeMap();
-    this.mapService.location
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((position) => {
-        if (this._View) {
-          this._View.goTo({
-            target: position,
-            zoom: 7,
-          });
-
-          this.addGraphicToMap(this._View, this.newPointMarker(position));
-        } else {
-          console.log("Map not loaded");
-        }
-      });
+    this._mapService.rings.pipe(takeUntil(this.destroy$)).subscribe((rings) => {
+      if (this._View) {
+        this.addGraphicToMap(this._View, this.newMarker(rings));
+      } else {
+        console.log("Map not loaded");
+      }
+    });
   }
 
   ngOnDestroy() {

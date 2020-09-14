@@ -4,43 +4,23 @@
   </div>
 
   <div class="locator-container">
-    <h1>Go to position</h1>
-
-    <form class="example-form">
-      <mat-form-field class="example-full-width">
-        <mat-label>Longtitude</mat-label>
-        <input
-          matInput
-          placeholder="Longtitude"
-          name="longitude"
-          [(ngModel)]="point.longitude"
-          type="number"
-          min="-180"
-          max="180"
-        />
-      </mat-form-field>
-      <mat-form-field class="example-full-width">
-        <mat-label>Latitude</mat-label>
-        <input
-          matInput
-          placeholder="Latitude"
-          name="latitude"
-          [(ngModel)]="point.latitude"
-          type="number"
-          min="-90"
-          max="90"
-        />
-      </mat-form-field>
-
-      <button
-        (click)="onClick()"
-        [ngStyle]="{ width: '100%' }"
-        mat-raised-button
-        color="primary"
-      >
-        Locate
-      </button>
-    </form>
-    <br />
+    <table cellpadding="10" cellspacing="1" border="1">
+      <tr>
+        <th>SUB_REGION</th>
+        <th>STATE_NAME</th>
+        <th>STATE_ABBR</th>
+      </tr>
+      <tr *ngFor="let feature of states | keyvalue">
+        <td (click)="onClick(feature)">
+          {{ feature.value.attributes.SUB_REGION }}
+        </td>
+        <td (click)="onClick(feature)">
+          {{ feature.value.attributes.STATE_NAME }}
+        </td>
+        <td (click)="onClick(feature)">
+          {{ feature.value.attributes.STATE_ABBR }}
+        </td>
+      </tr>
+    </table>
   </div>
 </div>

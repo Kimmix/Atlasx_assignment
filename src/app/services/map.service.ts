@@ -11,6 +11,12 @@ export class MapService {
   private _locatePoint = new BehaviorSubject<[number, number]>([-111, 33]);
   readonly locatePoint = this._locatePoint.asObservable();
 
+  private _rings = new BehaviorSubject<any>(null);
+  readonly rings = this._rings.asObservable();
+
+  private _query = new BehaviorSubject<any>(null);
+  readonly query = this._query.asObservable();
+
   constructor() {}
 
   setLocation(location: [number, number]) {
@@ -21,5 +27,14 @@ export class MapService {
   setLocatePoint(location: [number, number]) {
     this._locatePoint.next(location);
     console.log("Update location:", location);
+  }
+
+  setRings(geometry) {
+    this._rings.next(geometry);
+  }
+
+  setQuery(res) {
+    this._query.next(res);
+    console.log("Query:", res);
   }
 }
